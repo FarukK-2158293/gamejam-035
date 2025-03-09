@@ -40,6 +40,20 @@ for i in range(0, 9)
     fireSweepFrames.push fireSweepsheet.getImage(i * 64, 512, 64, 64)
 end for
 
+// Natures aura attack assets
+NaturesAurasheet = file.loadImage("assets/attackeffect/06.png")
+NaturesAuraFrames = []
+for i in range(0, 14)
+    NaturesAuraFrames.push NaturesAurasheet.getImage(i * 64, 320, 64, 64)
+end for
+
+// Water wave attack assets
+waterWavesheet = file.loadImage("assets/attackeffect/126.png")
+waterWaveFrames = []
+for i in range(0, 10)
+    waterWaveFrames.push waterWavesheet.getImage(i * 64, 384, 64, 64)
+end for
+
 // Wizard animation frames
 wizardSheetIdle = file.loadImage("assets/wizard/idle.png")
 wizardSheetAttack = file.loadImage("assets/wizard/Attack.png")
@@ -310,19 +324,73 @@ updateAbl = function
     count = 0
     rmlist = []
     for n in attacks 
-        if n[2] >= (n[1].len-1) then
+        // Handle animation cycling for Nature's Aura
+        if n[0].name == "naturesaura" then
+            // Add cycle counter if it doesn't exist yet
+            if n.len <= 4 then
+                n.push 0  // n[4] will track completed cycles (0, 1, 2 for 3 total)
+            end if
+            
+            // Update the frame
+            n[2] = (time - n[3]) * animSpeedFirebom % n[1].len
+            n[0].image = n[1][n[2]]
+            
+            // Check if we've completed a cycle
+            if n[2] >= (n[1].len-1) then
+                n[4] = n[4] + 1
+                n[3] = time  // Reset animation timer
+                
+                // Remove after 3 cycles
+                if n[4] >= 3 then
+                    n[0].image = null
+                    idx = display(4).sprites.indexOf(n[0])
+                    display(4).sprites.remove idx
+                    rmlist.push count
+                end if
+            end if
+        // Handle movement for Water Wave
+        else if n[0].name == "waterwave" then
+            // Update animation frame
+            n[2] = (time - n[3]) * animSpeedFirebom % n[1].len
+            n[0].image = n[1][n[2]]
+            
+            // Move the sprite based on stored direction
+            if n[0].x < 480 then
+                n[0].x = n[0].x - 3  // Move left
+                // Keep normal scale for left movement
+                n[0].scale = [2,2]
+            else
+                n[0].x = n[0].x + 3  // Move right
+                // Keep normal scale for right movement
+                n[0].scale = [-2,2]
+            end if
+            
+            // Remove if off screen
+            if n[0].x < -50 or n[0].x > 1010 then
+                n[0].image = null
+                idx = display(4).sprites.indexOf(n[0])
+                display(4).sprites.remove idx
+                rmlist.push count
+            end if
+        // Handle other abilities as before
+        else if n[2] >= (n[1].len-1) then
             n[0].image = null
             idx = display(4).sprites.indexOf(n[0])
             display(4).sprites.remove idx
             rmlist.push count
+        else
+            n[2] = (time - n[3]) * animSpeedFirebom % n[1].len
+            n[0].image = n[1][n[2]]
         end if
-        n[2] = (time - n[3]) * animSpeedFirebom % n[1].len
-        n[0].image = n[1][n[2]]
+        
+        // Handle firesweep scale
         if n[0].x < 480 and n[0].name == "firesweep" then
             n[0].scale = [-2,2]
         end if
+        
         count += 1
     end for
+    
     rmlist.reverse
     for n in rmlist
         attacks.remove(n)
@@ -353,6 +421,30 @@ updateAttackList = function
         sprite.localBounds.height = sprite.image.height
         sprite.name = "firesweep"
         globals.attacks.push [sprite,fireSweepFrames, 0, time]
+        display(4).sprites.push sprite 
+    else if globals.selectedAbl == "nature" then
+        sprite = new Sprite
+        sprite.image = NaturesAuraFrames[0]
+        sprite.scale = [2,2]
+        sprite.y = 320
+        sprite.x = floor(mouse.x)
+        sprite.localBounds = new Bounds
+        sprite.localBounds.width = sprite.image.width
+        sprite.localBounds.height = sprite.image.height
+        sprite.name = "naturesaura"
+        globals.attacks.push [sprite,NaturesAuraFrames, 0, time]
+        display(4).sprites.push sprite 
+    else if globals.selectedAbl == "water" then
+        sprite = new Sprite
+        sprite.image = waterWaveFrames[0]
+        sprite.scale = [2,2]
+        sprite.y = 330
+        sprite.x = floor(mouse.x)
+        sprite.localBounds = new Bounds
+        sprite.localBounds.width = sprite.image.width
+        sprite.localBounds.height = sprite.image.height
+        sprite.name = "waterwave"
+        globals.attacks.push [sprite,waterWaveFrames, 0, time]
         display(4).sprites.push sprite 
     end if
 end function
