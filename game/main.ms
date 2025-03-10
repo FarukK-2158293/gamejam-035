@@ -4,11 +4,10 @@ clear
 globals.hover = file.loadSound("assets/sounds/hover.wav")
 
 drawMenu = function 
-    clear
-    //gfx.drawImage file.loadImage("")
+    gfx.fillRect 0,0,960,640, color.maroon
 
     startB = addEvent(320, 320, "assets/components/startWhite.png")
-    htpB = addEvent(480, 160, "assets/components/htpWhite.png")
+    htpB = addEvent(300, 160, "assets/components/help.png")
 
     startB.onMouseOver = function
         self.tint = color.silver
@@ -26,7 +25,7 @@ drawMenu = function
     end function
     startB.onDragEnd = function
         if self.tint == color.rgb(128,128,128) then
-            sneakyLoadAndRun("game")
+            sneakyLoadAndRun("mapSelection")
         end if
     end function
 
